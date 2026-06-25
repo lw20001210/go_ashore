@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { message } from "antd";
 import { AppShell, Card } from "@/components/shell";
-import { api, streamReview } from "@/lib/api";
+import { api, isApiError, streamReview } from "@/lib/api";
 import { btnPrimary, cardTitle, muted, pageTitle } from "@/lib/ui-classes";
 import { todayKey } from "@/lib/utils";
 import { useAppStore } from "@/stores/app-store";
@@ -38,9 +38,13 @@ export default observer(function ReviewPage() {
       if (user) {
         await api.saveReview(review);
       }
-      message.success("复盘已生成");
-    } catch {
-      message.error("复盘生成失败，请稍后再试");
+      message.success(user ? "复盘已生成" : "复盘已生成（本地模板，登录后可使用 DeepSeek）");
+    } catch (error) {
+      if (isApiError(error) && error.status === 401) {
+        message.error("登录已过期，请重新登录");
+      } else {
+        message.error("复盘生成失败，请稍后再试");
+      }
     } finally {
       setLoading(false);
     }

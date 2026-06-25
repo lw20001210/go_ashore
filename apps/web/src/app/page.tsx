@@ -1,48 +1,52 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useState } from "react";
-import { message } from "antd";
-import type { Task } from "@shangan/shared";
-import { AppShell, Card } from "@/components/shell";
-import { TaskCard } from "@/components/task-card";
-import { btnGhost, btnPrimary } from "@/lib/ui-classes";
-import { api, isApiError } from "@/lib/api";
-import { daysUntil, todayKey } from "@/lib/utils";
-import { useAppStore } from "@/stores/app-store";
+import Link from 'next/link';
+import { observer } from 'mobx-react-lite';
+import { useEffect, useMemo, useState } from 'react';
+import { message } from 'antd';
+import type { Task } from '@shangan/shared';
+import { AppShell, Card } from '@/components/shell';
+import { TaskCard } from '@/components/task-card';
+import { btnGhost, btnPrimary } from '@/lib/ui-classes';
+import { api, isApiError } from '@/lib/api';
+import { daysUntil, todayKey } from '@/lib/utils';
+import { useAppStore } from '@/stores/app-store';
 
 function HomePage() {
   const store = useAppStore();
+  const { user, setTodayPlan } = store;
   const [loading, setLoading] = useState(false);
-  const [planSyncing, setPlanSyncing] = useState(Boolean(store.user));
+  const [planSyncing, setPlanSyncing] = useState(Boolean(user));
 
   const todayPlan = store.plans[todayKey()];
-  const completed = todayPlan?.tasks.filter((task) => task.completed).length ?? 0;
+  const completed =
+    todayPlan?.tasks.filter((task) => task.completed).length ?? 0;
 
   const totalText = useMemo(() => {
-    if (!todayPlan) return "0 分钟";
+    if (!todayPlan) return '0 分钟';
     const minutes = todayPlan.totalMinutes;
-    return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes} 分钟`;
+    return minutes >= 60
+      ? `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+      : `${minutes} 分钟`;
   }, [todayPlan]);
 
   useEffect(() => {
-    if (!store.user) {
-      setPlanSyncing(false);
-      return;
-    }
+    if (!user) return;
 
     let cancelled = false;
-    setPlanSyncing(true);
+
+    Promise.resolve().then(() => {
+      if (!cancelled) setPlanSyncing(true);
+    });
 
     void api
       .getTodayPlan()
       .then((plan) => {
-        if (!cancelled) store.setTodayPlan(plan);
+        if (!cancelled) setTodayPlan(plan);
       })
       .catch(() => {
         if (!cancelled) {
-          message.warning("未能同步云端计划，勾选状态可能无法保存");
+          message.warning('未能同步云端计划，勾选状态可能无法保存');
         }
       })
       .finally(() => {
@@ -52,32 +56,21 @@ function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [store.user]);
+  }, [user, setTodayPlan]);
 
   async function generatePlan() {
     if (!store.profile) return;
     setLoading(true);
     try {
       const plan = await api.generatePlan(store.profile);
+      store.setTodayPlan(plan);
 
-      if (store.user) {
-        try {
-          const saved = await api.getTodayPlan();
-          store.setTodayPlan(saved);
-        } catch {
-          store.setTodayPlan(plan);
-          message.warning("计划已生成，但未写入云端，请重新登录后再点重排");
-        }
-      } else {
-        store.setTodayPlan(plan);
-      }
-
-      message.success("今日计划已生成");
+      message.info(plan.aiGenerated ? '今日计划已生成（DeepSeek）' : '今日计划已生成（本地模板）');
     } catch (error) {
       if (isApiError(error) && error.status === 401) {
-        message.error("登录已过期，请重新登录后再重排");
+        message.error('登录已过期，请重新登录后再重排');
       } else {
-        message.error("生成计划失败，请稍后再试");
+        message.error('生成计划失败，请稍后再试');
       }
     } finally {
       setLoading(false);
@@ -90,12 +83,17 @@ function HomePage() {
     if (!plan) return;
 
     const prevCompleted = task.completed;
-    const nextTasks = plan.tasks.map((item) => (item.id === task.id ? { ...item, completed } : item));
+    const nextTasks = plan.tasks.map((item) =>
+      item.id === task.id ? { ...item, completed } : item,
+    );
     const nextPlan = {
       ...plan,
       date: key,
       tasks: nextTasks,
-      totalMinutes: nextTasks.reduce((sum, item) => sum + item.estimatedMinutes, 0),
+      totalMinutes: nextTasks.reduce(
+        (sum, item) => sum + item.estimatedMinutes,
+        0,
+      ),
     };
 
     store.setTodayPlan(nextPlan);
@@ -107,9 +105,9 @@ function HomePage() {
     } catch (error) {
       store.updateLocalTask(task.id, { completed: prevCompleted });
       if (isApiError(error) && error.status === 401) {
-        message.error("登录已过期，请重新登录");
+        message.error('登录已过期，请重新登录');
       } else {
-        message.error("同步失败，请稍后重试");
+        message.error('同步失败，请稍后重试');
       }
     }
   }
@@ -119,9 +117,13 @@ function HomePage() {
       <header className="mb-4">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-2xl font-black tracking-tight text-[#14251d]">上岸日程</h1>
+            <h1 className="text-2xl font-black tracking-tight text-[#14251d]">
+              上岸日程
+            </h1>
             <p className="mt-0.5 truncate text-xs text-[#8a8378]">
-              {store.user ? store.user.email : "把零散时间压成今天能完成的事"}
+              {store.authChecked && store.user
+                ? store.user.email
+                : '把零散时间压成今天能完成的事'}
             </p>
           </div>
           {store.showLoginButton && (
@@ -135,7 +137,14 @@ function HomePage() {
         </div>
 
         <div className="grid grid-cols-3 gap-2 rounded-2xl bg-[#163828] p-3 text-[#fffaf0]">
-          <Metric value={store.profile ? String(daysUntil(store.profile.examDate)) : "--"} label="距笔试" />
+          <Metric
+            value={
+              store.hydrated && store.profile
+                ? String(daysUntil(store.profile.examDate))
+                : '--'
+            }
+            label="距笔试"
+          />
           <Metric value={String(completed)} label="已完成" />
           <Metric value={totalText} label="预计用时" />
         </div>
@@ -143,9 +152,16 @@ function HomePage() {
 
       {!store.profile ? (
         <Card className="relative overflow-hidden !p-5">
-          <span className="absolute right-5 top-5 rounded-full bg-[#f0e4ca] px-3 py-1 text-xs font-bold text-[#7a5b2e]">首次配置</span>
-          <h2 className="max-w-[220px] text-2xl font-black tracking-[-0.04em] text-[#17231d]">先定下你的备考节奏</h2>
-          <p className="mt-3 text-sm leading-6 text-[#716a5b]">填写考试日期、工作日可用时间和薄弱科目，AI 会生成今天能完成的任务单。</p>
+          <span className="absolute right-5 top-5 rounded-full bg-[#f0e4ca] px-3 py-1 text-xs font-bold text-[#7a5b2e]">
+            首次配置
+          </span>
+          <h2 className="max-w-[220px] text-2xl font-black tracking-[-0.04em] text-[#17231d]">
+            先定下你的备考节奏
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-[#716a5b]">
+            填写考试日期、工作日可用时间和薄弱科目，AI
+            会生成今天能完成的任务单。
+          </p>
           <Link className={`mt-5 ${btnPrimary}`} href="/onboarding">
             创建我的今日任务单
           </Link>
@@ -162,7 +178,7 @@ function HomePage() {
               disabled={loading || planSyncing}
               className="rounded-lg bg-[#2f6b49] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60"
             >
-              {loading ? "生成中" : todayPlan ? "重排" : "生成"}
+              {loading ? '生成中' : todayPlan ? '重排' : '生成'}
             </button>
           </div>
 

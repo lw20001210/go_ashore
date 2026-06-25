@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import { api } from "@/lib/api";
 import { appStore } from "@/stores/app-store";
 
-/** 启动时用 Cookie 会话同步登录态，并标记 authChecked 避免登录按钮闪烁 */
+/** 挂载后恢复 localStorage，并校验 Cookie 会话 */
 export function AuthBootstrap() {
   useEffect(() => {
+    appStore.hydrateFromStorage();
+
     let cancelled = false;
 
     void api

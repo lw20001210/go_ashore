@@ -20,7 +20,14 @@ export class SyncService {
           focusSubjects: dto.profile.focusSubjects,
           phase: 'written',
         },
-        update: {},
+        update: {
+          examDate: new Date(dto.profile.examDate),
+          examType: dto.profile.examType,
+          weekdayMinutes: dto.profile.weekdayMinutes,
+          weekendMinutes: dto.profile.weekendMinutes,
+          focusSubjects: dto.profile.focusSubjects,
+          phase: 'written',
+        },
       });
     }
 

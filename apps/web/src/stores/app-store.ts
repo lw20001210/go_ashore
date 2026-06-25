@@ -9,7 +9,6 @@ const STORAGE_KEY = "shangan-store";
 export type AppUser = { id: string; email: string };
 
 type PersistedState = {
-  user: AppUser | null;
   profile: UserProfile | null;
   plans: Record<string, DailyPlan>;
   reviews: Record<string, DailyReview>;
@@ -37,12 +36,16 @@ class AppStore {
       return;
     }
 
-    this.rehydrate();
-
     autorun(() => {
       if (!this.hydrated) return;
       this.persist();
     });
+  }
+
+  /** 挂载后调用，避免 SSR 与客户端首屏 HTML 不一致 */
+  hydrateFromStorage() {
+    if (this.hydrated) return;
+    this.rehydrate();
   }
 
   /** 仅在本地恢复完成且会话校验结束、确实未登录时显示登录按钮 */
@@ -57,7 +60,6 @@ class AppStore {
         const parsed = JSON.parse(raw) as PersistedState & { state?: PersistedState };
         const data = parsed.state ?? parsed;
         runInAction(() => {
-          this.user = data.user ?? null;
           this.profile = data.profile ?? null;
           this.plans = data.plans ?? {};
           this.reviews = data.reviews ?? {};
@@ -74,7 +76,6 @@ class AppStore {
 
   private persist() {
     const payload: PersistedState = {
-      user: this.user,
       profile: this.profile,
       plans: this.plans,
       reviews: this.reviews,

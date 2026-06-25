@@ -22,27 +22,36 @@ export class AiController {
   @Post('daily-plan')
   @UseGuards(OptionalJwtAuthGuard)
   async generateDailyPlan(@Body() dto: GenerateDailyPlanDto, @Req() request: OptionalAuthRequest) {
-    const tasks = await this.aiService.generateDailyPlan(dto.profile);
     const userId = request.user?.sub;
+    const { tasks, aiGenerated } = await this.aiService.generateDailyPlan(dto.profile, {
+      useRemoteAi: Boolean(userId),
+    });
     if (userId) {
-      return this.plansService.upsertToday(userId, tasks, true);
+      return this.plansService.upsertToday(userId, tasks, aiGenerated);
     }
     return {
       date: todayDateKey(),
       tasks,
-      aiGenerated: true,
+      aiGenerated,
       totalMinutes: tasks.reduce((sum, task) => sum + task.estimatedMinutes, 0),
     };
   }
 
   @Post('review')
-  async streamReview(@Body() dto: ReviewDto, @Res() response: Response) {
+  @UseGuards(OptionalJwtAuthGuard)
+  async streamReview(
+    @Body() dto: ReviewDto,
+    @Req() request: OptionalAuthRequest,
+    @Res() response: Response,
+  ) {
     response.setHeader('Content-Type', 'text/event-stream');
     response.setHeader('Cache-Control', 'no-cache, no-transform');
     response.setHeader('Connection', 'keep-alive');
     response.setHeader('X-Accel-Buffering', 'no');
 
-    for await (const chunk of this.aiService.streamReview(dto.completedTasks, dto.userNote)) {
+    for await (const chunk of this.aiService.streamReview(dto.completedTasks, dto.userNote, {
+      useRemoteAi: Boolean(request.user?.sub),
+    })) {
       response.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
     }
     response.write('data: [DONE]\n\n');

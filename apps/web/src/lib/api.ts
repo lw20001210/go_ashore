@@ -184,33 +184,38 @@ export async function streamReview(
   userNote: string,
   onChunk: (chunk: string) => void,
 ) {
-  const response = await fetch("/api/ai/review", {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
+  const response = await fetch('/api/ai/review', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ completedTasks, userNote }),
   });
 
   if (!response.ok || !response.body) {
-    throw new Error(await response.text());
+    const { message: errorMessage, requestId } = await parseErrorResponse(response);
+    throw new ApiError(errorMessage, response.status, requestId);
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let buffer = "";
+  let buffer = '';
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
-    const events = buffer.split("\n\n");
-    buffer = events.pop() ?? "";
+    const events = buffer.split('\n\n');
+    buffer = events.pop() ?? '';
     for (const event of events) {
-      const line = event.split("\n").find((item) => item.startsWith("data: "));
+      const line = event.split('\n').find((item) => item.startsWith('data: '));
       if (!line) continue;
       const payload = line.slice(6);
-      if (payload === "[DONE]") return;
-      const parsed = JSON.parse(payload) as { content?: string };
-      if (parsed.content) onChunk(parsed.content);
+      if (payload === '[DONE]') return;
+      try {
+        const parsed = JSON.parse(payload) as { content?: string };
+        if (parsed.content) onChunk(parsed.content);
+      } catch {
+        // 忽略单个 SSE 块的解析错误
+      }
     }
   }
 }

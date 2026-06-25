@@ -3,6 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { Subject, Task, UserProfile, subjects } from '@shangan/shared';
 import { randomUUID } from 'crypto';
 
+export interface AiCallOptions {
+  /** 未登录时为 false，仅返回本地模板，避免匿名消耗 DeepSeek 配额 */
+  useRemoteAi?: boolean;
+}
+
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -31,19 +36,21 @@ export class AiService {
     };
   }
 
-  async generateDailyPlan(profile: UserProfile): Promise<Task[]> {
+  async generateDailyPlan(
+    profile: UserProfile,
+    options?: AiCallOptions,
+  ): Promise<{ tasks: Task[]; aiGenerated: boolean }> {
     const minutes = this.minutesForToday(profile);
     const fallback = this.fallbackPlan(profile, minutes);
-    const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
-    if (!apiKey || apiKey === 'sk-xxx') {
-      return fallback;
+    if (options?.useRemoteAi === false || !this.isDeepSeekConfigured()) {
+      return { tasks: fallback, aiGenerated: false };
     }
 
     try {
       const response = await fetch(`${this.baseUrl()}/chat/completions`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${this.deepSeekApiKey()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -54,24 +61,31 @@ export class AiService {
         }),
       });
       if (!response.ok) {
-        return fallback;
+        return { tasks: fallback, aiGenerated: false };
       }
       const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
       const content = data.choices?.[0]?.message?.content;
       if (!content) {
-        return fallback;
+        return { tasks: fallback, aiGenerated: false };
       }
       const parsed = JSON.parse(content) as { tasks?: Task[] };
       const tasks = (parsed.tasks ?? []).filter((task) => subjects.includes(task.subject));
-      return tasks.length > 0 ? this.normalizeTasks(tasks, minutes) : fallback;
+      const normalizedTasks = this.normalizeTasks(tasks, minutes);
+      if (normalizedTasks.length === 0) {
+        return { tasks: fallback, aiGenerated: false };
+      }
+      return { tasks: normalizedTasks, aiGenerated: true };
     } catch {
-      return fallback;
+      return { tasks: fallback, aiGenerated: false };
     }
   }
 
-  async *streamReview(completedTasks: Task[], userNote: string): AsyncGenerator<string> {
-    const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
-    if (!apiKey || apiKey === 'sk-xxx') {
+  async *streamReview(
+    completedTasks: Task[],
+    userNote: string,
+    options?: AiCallOptions,
+  ): AsyncGenerator<string> {
+    if (options?.useRemoteAi === false || !this.isDeepSeekConfigured()) {
       yield this.fallbackReview(completedTasks, userNote);
       return;
     }
@@ -79,7 +93,7 @@ export class AiService {
     const response = await fetch(`${this.baseUrl()}/chat/completions`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${this.deepSeekApiKey()}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -125,9 +139,22 @@ export class AiService {
     return this.config.get<string>('DEEPSEEK_BASE_URL') ?? 'https://api.deepseek.com';
   }
 
+  private isDeepSeekConfigured() {
+    const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
+    return Boolean(apiKey && apiKey !== 'sk-xxx');
+  }
+
+  private deepSeekApiKey() {
+    return this.config.getOrThrow<string>('DEEPSEEK_API_KEY');
+  }
+
   private minutesForToday(profile: UserProfile) {
-    const day = new Date().getDay();
-    return day === 0 || day === 6 ? profile.weekendMinutes : profile.weekdayMinutes;
+    const weekday = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Shanghai',
+      weekday: 'short',
+    }).format(new Date());
+    const isWeekend = weekday === 'Sat' || weekday === 'Sun';
+    return isWeekend ? profile.weekendMinutes : profile.weekdayMinutes;
   }
 
   private planMessages(profile: UserProfile, minutes: number): ChatMessage[] {
