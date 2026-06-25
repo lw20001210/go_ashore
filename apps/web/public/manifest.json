@@ -1,0 +1,18 @@
+{
+  "name": "上岸日程",
+  "short_name": "上岸日程",
+  "description": "面向在职考公人的 AI 每日备考计划器",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

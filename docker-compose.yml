@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-exam}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-shangan}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-exam} -d ${DB_NAME:-shangan}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://exam:password@db:5432/shangan}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-sk-xxx}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32-chars}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-7d}
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3001
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks:
+      - internal
+      - web
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    networks:
+      - web
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - web
+      - api
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - web
+
+volumes:
+  pgdata:
+
+networks:
+  internal:
+  web:

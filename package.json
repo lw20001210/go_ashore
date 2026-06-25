@@ -1,0 +1,22 @@
+{
+  "name": "shangan-schedule",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=api & bash -c 'for i in $(seq 1 30); do curl -sf http://localhost:3001/api/health >/dev/null && exit 0; sleep 1; done; exit 1' && npm run dev --workspace=web",
+    "dev:api": "npm run dev --workspace=api",
+    "dev:web": "npm run dev --workspace=web",
+    "db:studio": "npm run prisma:studio --workspace=api",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "docker:up": "docker compose up --build",
+    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

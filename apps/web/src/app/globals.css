@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3efe6;
+  --foreground: #17231d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Ant Design 会给所有 a 标签上蓝色，这里统一重置应用内链接 */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:visited {
+  color: inherit;
+}
+
+/* 底部导航：背景 + 文字必须一起写死，避免 Tailwind 被 Ant Design 盖掉 */
+.app-bottom-nav a.app-nav-link {
+  display: block;
+  border-radius: 0.75rem;
+  padding: 0.625rem 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-bottom-nav a.app-nav-link[data-active="true"] {
+  background-color: #163828 !important;
+  color: #fffaf0 !important;
+  box-shadow: 0 4px 12px rgba(22, 56, 40, 0.25);
+}
+
+.app-bottom-nav a.app-nav-link[data-active="false"] {
+  background-color: transparent !important;
+  color: #9a9288 !important;
+}
+
+.app-bottom-nav a.app-nav-link[data-active="false"]:active {
+  color: #163828 !important;
+}
+
+/* 主按钮：同样避免背景色丢失 */
+.app-btn-primary {
+  background-color: #2f6b49 !important;
+  color: #fffaf0 !important;
+}
+
+.app-btn-primary:visited {
+  color: #fffaf0 !important;
+}
+
+.app-btn-ghost {
+  background-color: #eef6f0 !important;
+  color: #245038 !important;
+}
+
+.app-btn-ghost:visited {
+  color: #245038 !important;
+}
+
+.app-btn-secondary {
+  background-color: #fffdf8 !important;
+  color: #17231d !important;
+  border: 1px solid #e8dcc8;
+}
+
+.app-btn-secondary:visited {
+  color: #17231d !important;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* 隐藏 Next.js 开发模式左下角 Issue 浮标 */
+nextjs-portal {
+  display: none !important;
+}

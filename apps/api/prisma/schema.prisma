@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  profile      Profile?
+  plans        DailyPlan[]
+  reviews      DailyReview[]
+}
+
+model Profile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examDate       DateTime
+  examType       String
+  weekdayMinutes Int
+  weekendMinutes Int
+  focusSubjects  String[]
+  phase          String   @default("written")
+}
+
+model DailyPlan {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         DateTime @db.Date
+  tasks        Json
+  aiGenerated  Boolean  @default(true)
+  totalMinutes Int
+
+  @@unique([userId, date])
+}
+
+model DailyReview {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date               DateTime @db.Date
+  completedTaskIds   String[]
+  userNote           String   @default("")
+  aiSummary          String   @default("")
+  tomorrowSuggestion String   @default("")
+
+  @@unique([userId, date])
+}

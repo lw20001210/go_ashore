@@ -1,0 +1,1 @@
+export { AntdAppProvider } from "./antd-app-provider";
