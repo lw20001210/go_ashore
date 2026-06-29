@@ -23,7 +23,7 @@ export function AntdAppProvider(props: AntdAppProviderProps) {
           token: {
             colorPrimary: '#2f6b49',
             borderRadius: 12,
-            fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif',
+            fontFamily: 'var(--font-app-sans)',
           },
         }}
       >

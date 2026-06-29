@@ -44,7 +44,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-生产部署见 `docs/deploy.md`。
+生产部署见 `docs/deploy.md`（已适配阿里云 `8.140.58.52` + 域名 `www.lwywywl.icu`）。
 
 ## 环境变量
 
