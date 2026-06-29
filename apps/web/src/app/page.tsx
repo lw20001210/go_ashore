@@ -8,7 +8,7 @@ import type { Task } from '@shangan/shared';
 import { AppShell, Card } from '@/components/shell';
 import { TaskCard } from '@/components/task-card';
 import { btnGhost, btnPrimary } from '@/lib/ui-classes';
-import { api, isApiError } from '@/lib/api';
+import { planApi, aiApi, isApiError } from '@/network';
 import { daysUntil, todayKey } from '@/lib/utils';
 import { useAppStore } from '@/stores/app-store';
 
@@ -39,14 +39,21 @@ function HomePage() {
       if (!cancelled) setPlanSyncing(true);
     });
 
-    void api
+    void planApi
       .getTodayPlan()
       .then((plan) => {
-        if (!cancelled) setTodayPlan(plan);
+        // 云端暂无今日计划时返回空列表，保留本地已有计划
+        if (!cancelled && plan.tasks.length > 0) {
+          setTodayPlan(plan);
+        }
       })
-      .catch(() => {
+      .catch((error) => {
         if (!cancelled) {
-          message.warning('未能同步云端计划，勾选状态可能无法保存');
+          const detail =
+            isApiError(error) && error.status === 0
+              ? '无法连接后端，勾选状态可能无法保存'
+              : '未能同步云端计划，勾选状态可能无法保存';
+          message.warning(detail);
         }
       })
       .finally(() => {
@@ -62,10 +69,14 @@ function HomePage() {
     if (!store.profile) return;
     setLoading(true);
     try {
-      const plan = await api.generatePlan(store.profile);
+      const plan = await aiApi.generatePlan(store.profile);
       store.setTodayPlan(plan);
 
-      message.info(plan.aiGenerated ? '今日计划已生成（DeepSeek）' : '今日计划已生成（本地模板）');
+      message.info(
+        plan.aiGenerated
+          ? '今日计划已生成（DeepSeek）'
+          : '今日计划已生成（本地模板）',
+      );
     } catch (error) {
       if (isApiError(error) && error.status === 401) {
         message.error('登录已过期，请重新登录后再重排');
@@ -100,7 +111,7 @@ function HomePage() {
     if (!store.user) return;
 
     try {
-      const saved = await api.saveTodayPlan(nextTasks);
+      const saved = await planApi.saveTodayPlan(nextTasks);
       store.setTodayPlan(saved);
     } catch (error) {
       store.updateLocalTask(task.id, { completed: prevCompleted });

@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
@@ -33,7 +37,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email.toLowerCase() },
+    });
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -46,11 +52,14 @@ export class AuthService {
       throw new UnauthorizedException('Missing refresh token');
     }
 
+    const secret = this.config.getOrThrow<string>('JWT_SECRET');
+
     try {
       const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
-        secret: this.config.getOrThrow<string>('JWT_SECRET'),
+        secret,
       });
-      return this.signTokens(payload);
+      // 只保留业务字段，丢弃 iat/exp，避免 signTokens 再次设置 expiresIn 时冲突
+      return this.signTokens({ sub: payload.sub, email: payload.email });
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -62,8 +71,10 @@ export class AuthService {
 
   private signTokens(payload: JwtPayload) {
     const secret = this.config.getOrThrow<string>('JWT_SECRET');
-    const accessExpiresIn = (this.config.get<string>('JWT_ACCESS_EXPIRES') ?? '15m') as '15m';
-    const refreshExpiresIn = (this.config.get<string>('JWT_REFRESH_EXPIRES') ?? '7d') as '7d';
+    const accessExpiresIn = (this.config.get<string>('JWT_ACCESS_EXPIRES') ??
+      '15m') as '15m';
+    const refreshExpiresIn = (this.config.get<string>('JWT_REFRESH_EXPIRES') ??
+      '7d') as '7d';
 
     return {
       user: { id: payload.sub, email: payload.email },

@@ -4,6 +4,7 @@ import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
 import { DiagnosticsModule } from './diagnostics/diagnostics.module';
 import { HealthController } from './health.controller';
+import { HistoryModule } from './history/history.module';
 import { PlansModule } from './plans/plans.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProgressModule } from './progress/progress.module';
@@ -21,6 +22,7 @@ import { UsersModule } from './users/users.module';
     PlansModule,
     ReviewsModule,
     ProgressModule,
+    HistoryModule,
     SyncModule,
     AiModule,
   ],

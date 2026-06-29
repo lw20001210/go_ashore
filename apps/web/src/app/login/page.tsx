@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { observer } from "mobx-react-lite";
 import { FormEvent, useState } from "react";
 import { message } from "antd";
 import { PasswordInput } from "@/components/password-input";
 import { AppShell, Card } from "@/components/shell";
 import { showAuthError } from "@/lib/auth-errors";
-import { api } from "@/lib/api";
+import { authApi, syncApi } from "@/network";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/app-store";
 
@@ -74,8 +73,8 @@ export default observer(function LoginPage() {
     try {
       result =
         mode === "login"
-          ? await api.login(trimmedEmail, password)
-          : await api.register(trimmedEmail, password);
+          ? await authApi.login(trimmedEmail, password)
+          : await authApi.register(trimmedEmail, password);
     } catch (error) {
       showAuthError(error, mode);
       setLoading(false);
@@ -85,7 +84,7 @@ export default observer(function LoginPage() {
     setUser(result.user);
 
     try {
-      await api.merge({
+      await syncApi.merge({
         profile: profile ?? undefined,
         plans: Object.values(plans),
         reviews: Object.values(reviews),

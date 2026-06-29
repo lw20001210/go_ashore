@@ -1,5 +1,5 @@
 import { message } from "antd";
-import { isApiError } from "@/lib/api";
+import { isApiError } from "@/network";
 import { showTaskIdError } from "@/lib/show-task-id-error";
 
 type AuthMode = "login" | "register";

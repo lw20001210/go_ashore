@@ -44,7 +44,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const isServerError = statusCode >= HttpStatus.INTERNAL_SERVER_ERROR;
     const publicMessage = isServerError ? 'Internal Server Error' : detail;
 
-    if (statusCode >= HttpStatus.BAD_REQUEST) {
+    // 仅记录 5xx，避免「暂无数据」等 4xx 污染排查日志
+    if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.errorLog.record({
         requestId,
         statusCode,

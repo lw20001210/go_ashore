@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useState } from "react";
-import { subjects, type ProgressSummary, type Subject } from "@shangan/shared";
-import { AppShell, Card } from "@/components/shell";
-import { api } from "@/lib/api";
-import { cardTitle, muted, pageTitle } from "@/lib/ui-classes";
-import { daysUntil } from "@/lib/utils";
-import { useAppStore } from "@/stores/app-store";
+import { observer } from 'mobx-react-lite';
+import { useEffect, useMemo, useState } from 'react';
+import { subjects, type ProgressSummary, type Subject } from '@shangan/shared';
+import { AppShell, Card } from '@/components/shell';
+import { progressApi } from '@/network';
+import { cardTitle, muted, pageTitle } from '@/lib/ui-classes';
+import { daysUntil } from '@/lib/utils';
+import { useAppStore } from '@/stores/app-store';
 
 export default observer(function ProgressPage() {
   const { profile, plans, reviews, user } = useAppStore();
@@ -15,14 +15,16 @@ export default observer(function ProgressPage() {
 
   useEffect(() => {
     if (!user) return;
-    void api.getProgress().then(setRemote).catch(() => undefined);
+    void progressApi
+      .getProgress()
+      .then(setRemote)
+      .catch(() => undefined);
   }, [user]);
 
   const local = useMemo<ProgressSummary>(() => {
-    const subjectCounts = Object.fromEntries(subjects.map((subject) => [subject, 0])) as Record<
-      Subject,
-      number
-    >;
+    const subjectCounts = Object.fromEntries(
+      subjects.map((subject) => [subject, 0]),
+    ) as Record<Subject, number>;
     Object.values(plans).forEach((plan) => {
       plan.tasks.forEach((task) => {
         if (task.completed) subjectCounts[task.subject] += 1;
@@ -59,7 +61,9 @@ export default observer(function ProgressPage() {
             return (
               <div key={subject}>
                 <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="font-semibold text-[#17231d]">{subject}</span>
+                  <span className="font-semibold text-[#17231d]">
+                    {subject}
+                  </span>
                   <span className={muted}>{count}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-[#ebe3d4]">

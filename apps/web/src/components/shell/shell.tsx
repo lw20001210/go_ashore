@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/', label: '今日' },
   { href: '/review', label: '复盘' },
+  { href: '/history', label: '历史' },
   { href: '/progress', label: '进度' },
   { href: '/settings', label: '设置' },
 ];
@@ -35,7 +36,7 @@ export function AppShell(props: AppShellProps) {
       </div>
 
       <nav className="app-bottom-nav fixed inset-x-0 bottom-0 z-20 border-t border-[#e8dcc8]/80 bg-[#fffaf0]/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur-md">
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1.5">
+        <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
           {navItems.map((item) => {
             const active = isNavActive(pathname, item.href);
 

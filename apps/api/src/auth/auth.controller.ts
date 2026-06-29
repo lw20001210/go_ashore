@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import {
   ACCESS_TOKEN_COOKIE,
@@ -18,22 +26,33 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) response: Response) {
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const result = await this.authService.register(dto);
     this.setAuthCookies(response, result.accessToken, result.refreshToken);
     return { user: result.user };
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const result = await this.authService.login(dto);
     this.setAuthCookies(response, result.accessToken, result.refreshToken);
     return { user: result.user };
   }
 
   @Post('refresh')
-  refresh(@Req() request: AuthRequest, @Res({ passthrough: true }) response: Response) {
-    const result = this.authService.refresh(readRefreshToken(request.cookies ?? {}));
+  refresh(
+    @Req() request: AuthRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = this.authService.refresh(
+      readRefreshToken(request.cookies ?? {}),
+    );
     this.setAuthCookies(response, result.accessToken, result.refreshToken);
     return { user: result.user };
   }
@@ -50,7 +69,11 @@ export class AuthController {
     return { user: { id: request.user.sub, email: request.user.email } };
   }
 
-  private setAuthCookies(response: Response, accessToken: string, refreshToken: string) {
+  private setAuthCookies(
+    response: Response,
+    accessToken: string,
+    refreshToken: string,
+  ) {
     clearAuthCookies(response);
     response.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true,

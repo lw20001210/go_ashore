@@ -8,6 +8,8 @@ COPY packages/shared/package.json packages/shared/package.json
 RUN npm ci --workspaces --include-workspace-root
 
 FROM deps AS build
+ARG API_INTERNAL_URL=http://api:3001
+ENV API_INTERNAL_URL=$API_INTERNAL_URL
 COPY packages/shared packages/shared
 COPY apps/web apps/web
 RUN npm run build --workspace=@shangan/shared

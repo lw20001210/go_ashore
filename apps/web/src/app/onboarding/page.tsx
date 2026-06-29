@@ -2,9 +2,10 @@
 
 import { observer } from "mobx-react-lite";
 import { FormEvent, useState } from "react";
+import { message } from "antd";
 import { subjects, type ExamType, type Subject, type UserProfile } from "@shangan/shared";
 import { AppShell, Card } from "@/components/shell";
-import { api } from "@/lib/api";
+import { userApi, aiApi, isApiError } from "@/network";
 import { useAppStore } from "@/stores/app-store";
 
 export default observer(function OnboardingPage() {
@@ -36,11 +37,17 @@ export default observer(function OnboardingPage() {
     try {
       setProfile(profile);
       if (user) {
-        await api.saveProfile(profile);
+        await userApi.saveProfile(profile);
       }
-      const plan = await api.generatePlan(profile);
+      const plan = await aiApi.generatePlan(profile);
       setTodayPlan(plan);
       window.location.href = "/";
+    } catch (error) {
+      if (isApiError(error) && error.status === 401) {
+        message.error("登录已过期，请重新登录后再保存");
+      } else {
+        message.error("生成计划失败，请稍后再试");
+      }
     } finally {
       setLoading(false);
     }

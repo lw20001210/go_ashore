@@ -40,3 +40,10 @@ export interface ProgressSummary {
   streakDays: number;
   subjectCounts: Record<Subject, number>;
 }
+
+/** 某一天的计划与复盘快照，用于历史记录页 */
+export interface HistoryDay {
+  date: string;
+  plan: DailyPlan | null;
+  review: DailyReview | null;
+}

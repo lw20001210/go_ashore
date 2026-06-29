@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useState } from "react";
 import { message } from "antd";
 import { AppShell, Card } from "@/components/shell";
-import { api, isApiError, streamReview } from "@/lib/api";
+import { reviewApi, isApiError, streamReview } from "@/network";
 import { btnPrimary, cardTitle, muted, pageTitle } from "@/lib/ui-classes";
 import { todayKey } from "@/lib/utils";
 import { useAppStore } from "@/stores/app-store";
@@ -36,7 +36,7 @@ export default observer(function ReviewPage() {
       };
       saveLocalReview(review);
       if (user) {
-        await api.saveReview(review);
+        await reviewApi.saveReview(review);
       }
       message.success(user ? "复盘已生成" : "复盘已生成（本地模板，登录后可使用 DeepSeek）");
     } catch (error) {

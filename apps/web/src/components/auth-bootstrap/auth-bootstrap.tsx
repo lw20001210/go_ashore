@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { api } from "@/lib/api";
-import { appStore } from "@/stores/app-store";
+import { useEffect } from 'react';
+import { authApi } from '@/network';
+import { appStore } from '@/stores/app-store';
 
-/** 挂载后恢复 localStorage，并校验 Cookie 会话 */
+/** 挂载后恢复 localStorage，并用 refresh token 恢复 Cookie 会话 */
 export function AuthBootstrap() {
   useEffect(() => {
     appStore.hydrateFromStorage();
 
     let cancelled = false;
 
-    void api
-      .me()
+    void authApi
+      .refresh()
       .then(({ user }) => {
         if (!cancelled) appStore.setUser(user);
       })

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { message } from "antd";
 import { AppShell, Card } from "@/components/shell";
-import { api, isApiError } from "@/lib/api";
+import { aiApi, authApi, isApiError } from "@/network";
 import { btnGhost, btnPrimary, btnSecondary, cardTitle, muted, pageTitle } from "@/lib/ui-classes";
 import { useAppStore } from "@/stores/app-store";
 
@@ -48,7 +48,7 @@ export default observer(function SettingsPage() {
     }
 
     try {
-      const status = await api.getAiStatus();
+      const status = await aiApi.getAiStatus();
       if (cancelledRef.current) return;
       setAiStatus(status);
       setAiCheckState("ok");
@@ -83,7 +83,7 @@ export default observer(function SettingsPage() {
 
   async function logout() {
     try {
-      await api.logout();
+      await authApi.logout();
       message.success("已退出登录");
     } catch {
       message.error("退出登录失败");

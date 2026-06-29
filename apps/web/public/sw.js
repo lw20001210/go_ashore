@@ -1,4 +1,4 @@
-const CACHE_NAME = "shangan-schedule-v1";
+const CACHE_NAME = "shangan-schedule-v2";
 const APP_SHELL = ["/", "/manifest.json", "/icon.svg"];
 
 self.addEventListener("install", (event) => {

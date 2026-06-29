@@ -43,6 +43,8 @@ services:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
+      args:
+        API_INTERNAL_URL: http://api:3001
     environment:
       NODE_ENV: ${NODE_ENV:-development}
     depends_on:

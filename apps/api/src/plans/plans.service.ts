@@ -15,7 +15,12 @@ export class PlansService {
       where: { userId_date: { userId, date: todayDateOnly() } },
     });
     if (!plan) {
-      throw new NotFoundException('Today plan not found');
+      return {
+        date: toDateKey(todayDateOnly()),
+        tasks: [],
+        aiGenerated: false,
+        totalMinutes: 0,
+      };
     }
     return this.toDailyPlan(plan);
   }
@@ -48,7 +53,7 @@ export class PlansService {
     const plan = await this.getToday(userId);
     const tasks = plan.tasks.map((task) => (task.id === taskId ? { ...task, ...dto } : task));
     if (!tasks.some((task) => task.id === taskId)) {
-      throw new NotFoundException('Task not found');
+      throw new NotFoundException('今日计划中未找到该任务');
     }
     return this.upsertToday(userId, tasks, plan.aiGenerated);
   }

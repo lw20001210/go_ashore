@@ -9,17 +9,23 @@ function getLanOrigins(): string[] {
 
   if (fromEnv?.length) return fromEnv;
 
-  const origins = new Set<string>();
-  for (const iface of Object.values(os.networkInterfaces())) {
-    for (const addr of iface ?? []) {
-      if (addr.family === "IPv4" && !addr.internal) {
-        origins.add(addr.address);
+  try {
+    const origins = new Set<string>();
+    for (const iface of Object.values(os.networkInterfaces())) {
+      for (const addr of iface ?? []) {
+        if (addr.family === "IPv4" && !addr.internal) {
+          origins.add(addr.address);
+        }
       }
     }
+    return [...origins];
+  } catch {
+    return [];
   }
-
-  return [...origins];
 }
+
+const apiInternalUrl =
+  process.env.API_INTERNAL_URL ?? "http://localhost:3001";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: getLanOrigins(),
@@ -40,7 +46,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:3001/api/:path*",
+        destination: `${apiInternalUrl}/api/:path*`,
       },
     ];
   },
