@@ -14,7 +14,9 @@
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "docker:up": "docker compose up --build",
-    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build"
+    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build",
+    "pack:deploy": "bash scripts/pack-deploy.sh",
+    "configure:smtp": "bash scripts/configure-smtp.sh"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

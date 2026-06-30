@@ -22,3 +22,15 @@ export function generatePlan(profile: UserProfile) {
 export function getAiStatus() {
   return client.get<AiStatus>('/api/ai/status').then((r) => r.data);
 }
+
+export interface AiQuota {
+  limit: number;
+  used: number;
+  remaining: number;
+  requiresLogin: boolean;
+}
+
+/** 今日 AI 生成剩余次数 */
+export function getAiQuota() {
+  return client.get<AiQuota>('/api/ai/quota').then((r) => r.data);
+}

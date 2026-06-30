@@ -56,6 +56,8 @@ export default observer(function OnboardingPage() {
     } catch (error) {
       if (isApiError(error) && error.status === 401) {
         message.error("登录已过期，请重新登录后再保存");
+      } else if (isApiError(error) && error.status === 429) {
+        message.error(error.message);
       } else {
         message.error("生成计划失败，请稍后再试");
       }

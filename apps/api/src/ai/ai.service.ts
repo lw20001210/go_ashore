@@ -139,7 +139,7 @@ export class AiService {
     return this.config.get<string>('DEEPSEEK_BASE_URL') ?? 'https://api.deepseek.com';
   }
 
-  private isDeepSeekConfigured() {
+  isDeepSeekConfigured() {
     const apiKey = this.config.get<string>('DEEPSEEK_API_KEY');
     return Boolean(apiKey && apiKey !== 'sk-xxx');
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { observer } from "mobx-react-lite";
 import { FormEvent, useState } from "react";
 import { message } from "antd";
@@ -170,6 +171,14 @@ export default observer(function LoginPage() {
               }}
             />
           </label>
+
+          {mode === "login" && (
+            <p className="text-right text-sm">
+              <Link href="/forgot-password" className="text-[#2f6b49] no-underline">
+                忘记密码？
+              </Link>
+            </p>
+          )}
 
           <button
             type="submit"

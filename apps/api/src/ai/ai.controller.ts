@@ -4,6 +4,7 @@ import { OptionalAuthRequest } from '../auth/auth.types';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { todayDateKey } from '../common/date';
 import { PlansService } from '../plans/plans.service';
+import { AiUsageService } from './ai-usage.service';
 import { AiService } from './ai.service';
 import { GenerateDailyPlanDto, ReviewDto } from './dto/ai.dto';
 
@@ -12,6 +13,7 @@ export class AiController {
   constructor(
     private readonly aiService: AiService,
     private readonly plansService: PlansService,
+    private readonly aiUsage: AiUsageService,
   ) {}
 
   @Get('status')
@@ -19,13 +21,33 @@ export class AiController {
     return this.aiService.getStatus();
   }
 
+  @Get('quota')
+  @UseGuards(OptionalJwtAuthGuard)
+  async quota(@Req() request: OptionalAuthRequest) {
+    if (!request.user?.sub) {
+      return { limit: 0, used: 0, remaining: 0, requiresLogin: true };
+    }
+    return { ...(await this.aiUsage.getQuota(request.user.sub)), requiresLogin: false };
+  }
+
   @Post('daily-plan')
   @UseGuards(OptionalJwtAuthGuard)
   async generateDailyPlan(@Body() dto: GenerateDailyPlanDto, @Req() request: OptionalAuthRequest) {
     const userId = request.user?.sub;
+    const useRemoteAi = Boolean(userId) && this.aiService.isDeepSeekConfigured();
+
+    if (useRemoteAi && userId) {
+      await this.aiUsage.assertCanGenerate(userId);
+    }
+
     const { tasks, aiGenerated } = await this.aiService.generateDailyPlan(dto.profile, {
-      useRemoteAi: Boolean(userId),
+      useRemoteAi,
     });
+
+    if (userId && aiGenerated) {
+      await this.aiUsage.recordGeneration(userId);
+    }
+
     if (userId) {
       return this.plansService.upsertToday(userId, tasks, aiGenerated);
     }

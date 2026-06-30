@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from 'next/link';
 import { observer } from 'mobx-react-lite';
@@ -9,6 +9,7 @@ import { AppShell, Card } from '@/components/shell';
 import { TaskCard } from '@/components/task-card';
 import { btnGhost, btnPrimary } from '@/lib/ui-classes';
 import { planApi, aiApi, isApiError } from '@/network';
+import type { AiQuota } from '@/network/api/ai';
 import { daysUntil, todayKey } from '@/lib/utils';
 import { useAppStore } from '@/stores/app-store';
 
@@ -17,6 +18,7 @@ function HomePage() {
   const { user, setTodayPlan } = store;
   const [loading, setLoading] = useState(false);
   const [planSyncing, setPlanSyncing] = useState(Boolean(user));
+  const [aiQuota, setAiQuota] = useState<AiQuota | null>(null);
 
   const todayPlan = store.plans[todayKey()];
   const completed =
@@ -62,12 +64,20 @@ function HomePage() {
     };
   }, [user, setTodayPlan]);
 
+  useEffect(() => {
+    if (!user) return;
+    void aiApi.getAiQuota().then(setAiQuota).catch(() => undefined);
+  }, [user]);
+
   async function generatePlan() {
     if (!store.profile) return;
     setLoading(true);
     try {
       const plan = await aiApi.generatePlan(store.profile);
       store.setTodayPlan(plan);
+      if (user) {
+        void aiApi.getAiQuota().then(setAiQuota).catch(() => undefined);
+      }
 
       message.info(
         plan.aiGenerated
@@ -77,6 +87,8 @@ function HomePage() {
     } catch (error) {
       if (isApiError(error) && error.status === 401) {
         message.error('登录已过期，请重新登录后再重排');
+      } else if (isApiError(error) && error.status === 429) {
+        message.error(error.message);
       } else {
         message.error('生成计划失败，请稍后再试');
       }
@@ -179,7 +191,14 @@ function HomePage() {
           <div className="flex items-center justify-between border-b border-[#ebe3d4] px-4 py-3">
             <div>
               <h2 className="text-base font-bold text-[#17231d]">今日任务</h2>
-              <p className="text-xs text-[#9a9288]">{todayKey()}</p>
+              <p className="text-xs text-[#9a9288]">
+                {todayKey()}
+                {user && aiQuota && !aiQuota.requiresLogin && aiQuota.limit > 0 && (
+                  <span className="ml-2">
+                    · AI 剩余 {aiQuota.remaining}/{aiQuota.limit} 次
+                  </span>
+                )}
+              </p>
             </div>
             <button
               onClick={generatePlan}

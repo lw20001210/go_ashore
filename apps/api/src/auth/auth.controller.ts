@@ -17,7 +17,7 @@ import {
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AuthService } from './auth.service';
 import type { AuthRequest } from './auth.types';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto } from './dto/auth.dto';
 
 /** ponytail: 不用 NODE_ENV 推断 Secure，HTTP 生产部署（申请证书前）否则 Cookie 写不进去 */
 function cookieSecure() {
@@ -64,6 +64,27 @@ export class AuthController {
   logout(@Res({ passthrough: true }) response: Response) {
     clearAuthCookies(response);
     return { ok: true };
+  }
+
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Get('password-reset-available')
+  passwordResetAvailable() {
+    return { available: this.authService.isPasswordResetAvailable() };
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  changePassword(@Req() request: AuthRequest, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(request.user.sub, dto);
   }
 
   @Get('me')

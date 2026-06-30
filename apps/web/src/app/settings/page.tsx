@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { message } from "antd";
+import { PasswordInput } from "@/components/password-input";
 import { AppShell, Card } from "@/components/shell";
 import { aiApi, authApi, isApiError } from "@/network";
 import { btnGhost, btnPrimary, btnSecondary, cardTitle, muted, pageTitle } from "@/lib/ui-classes";
@@ -28,6 +29,9 @@ export default observer(function SettingsPage() {
   const [aiStatus, setAiStatus] = useState<AiStatus | null>(null);
   const [aiCheckState, setAiCheckState] = useState<AiCheckState>("loading");
   const [aiCheckError, setAiCheckError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const cancelledRef = useRef(false);
   const retryTimerRef = useRef<number | null>(null);
 
@@ -93,6 +97,28 @@ export default observer(function SettingsPage() {
     }
   }
 
+  async function submitChangePassword() {
+    if (newPassword.length < 8) {
+      message.error("新密码至少 8 位");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const result = await authApi.changePassword(currentPassword, newPassword);
+      message.success(result.message);
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (error) {
+      if (isApiError(error)) {
+        message.error(error.message);
+      } else {
+        message.error("修改失败，请稍后再试");
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  }
+
   return (
     <AppShell>
       <h1 className={pageTitle}>设置</h1>
@@ -104,17 +130,62 @@ export default observer(function SettingsPage() {
             {user ? `已登录：${user.email}` : "当前为游客模式，数据仅保存在本机。"}
           </p>
           {user ? (
-            <button
-              type="button"
-              onClick={logout}
-              className="mt-4 w-full rounded-xl border border-[#e8dcc8] bg-white px-4 py-3 text-sm font-semibold text-[#17231d]"
-            >
-              退出登录
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={logout}
+                className="mt-4 w-full rounded-xl border border-[#e8dcc8] bg-white px-4 py-3 text-sm font-semibold text-[#17231d]"
+              >
+                退出登录
+              </button>
+              <div className="mt-4 space-y-3 border-t border-[#ebe3d4] pt-4">
+                <p className="text-sm font-semibold text-[#17231d]">修改密码</p>
+                <p className={`text-xs leading-5 ${muted}`}>
+                  仅在你<strong>记得当前密码</strong>时使用。若已忘记，请
+                  <Link href="/forgot-password" className="mx-1 font-semibold text-[#2f6b49] no-underline">
+                    忘记密码
+                  </Link>
+                  用邮箱验证码重置。
+                </p>
+                <label className="block">
+                  <span className={`text-xs ${muted}`}>当前密码</span>
+                  <PasswordInput
+                    value={currentPassword}
+                    autoComplete="current-password"
+                    onChange={setCurrentPassword}
+                  />
+                </label>
+                <label className="block">
+                  <span className={`text-xs ${muted}`}>新密码</span>
+                  <PasswordInput
+                    value={newPassword}
+                    autoComplete="new-password"
+                    placeholder="至少 8 位"
+                    onChange={setNewPassword}
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={changingPassword || !currentPassword || !newPassword}
+                  onClick={submitChangePassword}
+                  className={`${btnSecondary} disabled:opacity-50`}
+                >
+                  {changingPassword ? "保存中…" : "保存新密码"}
+                </button>
+              </div>
+            </>
           ) : (
-            <Link href="/login" className={`mt-4 ${btnPrimary}`}>
-              登录保存进度
-            </Link>
+            <>
+              <Link href="/login" className={`mt-4 ${btnPrimary}`}>
+                登录保存进度
+              </Link>
+              <p className={`mt-3 text-xs leading-5 ${muted}`}>
+                忘记密码？
+                <Link href="/forgot-password" className="ml-1 font-semibold text-[#2f6b49] no-underline">
+                  用邮箱验证码重置
+                </Link>
+              </p>
+            </>
           )}
         </Card>
 
