@@ -6,29 +6,35 @@ import {
   Req,
   Res,
   UseGuards,
-} from '@nestjs/common';
-import type { Response } from 'express';
+} from "@nestjs/common";
+import type { Response } from "express";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   clearAuthCookies,
   readRefreshToken,
-} from './auth-cookies';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { AuthService } from './auth.service';
-import type { AuthRequest } from './auth.types';
-import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto } from './dto/auth.dto';
+} from "./auth-cookies";
+import { JwtAuthGuard } from "./jwt-auth.guard";
+import { AuthService } from "./auth.service";
+import type { AuthRequest } from "./auth.types";
+import {
+  LoginDto,
+  RegisterDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  ChangePasswordDto,
+} from "./dto/auth.dto";
 
 /** ponytail: 不用 NODE_ENV 推断 Secure，HTTP 生产部署（申请证书前）否则 Cookie 写不进去 */
 function cookieSecure() {
-  return process.env.COOKIE_SECURE === 'true';
+  return process.env.COOKIE_SECURE === "true";
 }
 
-@Controller('auth')
+@Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
+  @Post("register")
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) response: Response,
@@ -38,7 +44,7 @@ export class AuthController {
     return { user: result.user };
   }
 
-  @Post('login')
+  @Post("login")
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) response: Response,
@@ -48,7 +54,7 @@ export class AuthController {
     return { user: result.user };
   }
 
-  @Post('refresh')
+  @Post("refresh")
   refresh(
     @Req() request: AuthRequest,
     @Res({ passthrough: true }) response: Response,
@@ -60,34 +66,34 @@ export class AuthController {
     return { user: result.user };
   }
 
-  @Post('logout')
+  @Post("logout")
   logout(@Res({ passthrough: true }) response: Response) {
     clearAuthCookies(response);
     return { ok: true };
   }
 
-  @Post('forgot-password')
+  @Post("forgot-password")
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
 
-  @Get('password-reset-available')
+  @Get("password-reset-available")
   passwordResetAvailable() {
     return { available: this.authService.isPasswordResetAvailable() };
   }
 
-  @Post('reset-password')
+  @Post("reset-password")
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
 
-  @Post('change-password')
+  @Post("change-password")
   @UseGuards(JwtAuthGuard)
   changePassword(@Req() request: AuthRequest, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(request.user.sub, dto);
   }
 
-  @Get('me')
+  @Get("me")
   @UseGuards(JwtAuthGuard)
   me(@Req() request: AuthRequest) {
     return { user: { id: request.user.sub, email: request.user.email } };
@@ -102,15 +108,15 @@ export class AuthController {
     response.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true,
       maxAge: 15 * 60 * 1000,
-      path: '/',
-      sameSite: 'lax',
+      path: "/",
+      sameSite: "lax",
       secure: cookieSecure(),
     });
     response.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-      sameSite: 'lax',
+      path: "/",
+      sameSite: "lax",
       secure: cookieSecure(),
     });
   }

@@ -16,7 +16,9 @@
     "docker:up": "docker compose up --build",
     "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build",
     "pack:deploy": "bash scripts/pack-deploy.sh",
-    "configure:smtp": "bash scripts/configure-smtp.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "configure:smtp": "bash scripts/configure-smtp.sh",
+    "test:api": "npm run test:e2e --workspace=api"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

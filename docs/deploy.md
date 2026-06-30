@@ -193,11 +193,40 @@ Nginx (:80 / :443)  www.lwywywl.icu
 
 ## 七、更新部署
 
+### 方式 A：本地一条命令（推荐）
+
+在开发机项目根目录（已配置 `scripts/deploy.env` 或环境变量 `DEPLOY_*`）：
+
+```bash
+npm run deploy
+```
+
+等价于：打包 → scp → 服务器执行 `scripts/deploy-server.sh`（build + up + migrate + health）。
+
+### 方式 B：服务器 git pull
+
+若服务器直接 clone 仓库而非 tar 部署：
+
 ```bash
 cd /opt/shangan-schedule
 git pull
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+bash scripts/deploy-server.sh
 ```
+
+### 方式 C：手动 tar
+
+```bash
+# 本地
+npm run pack:deploy
+scp web.tar.gz root@8.140.58.52:/tmp/
+
+# 服务器
+cd /opt/shangan-schedule
+tar -xzf /tmp/web.tar.gz
+bash scripts/deploy-server.sh
+```
+
+> **注意**：tar 不含 `.env`，解压不会覆盖服务器已有配置。
 
 ---
 

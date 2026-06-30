@@ -4,9 +4,11 @@ dist
 .env
 .env.local
 deploy-smtp.env
+scripts/deploy.env
 .cache
 .pnpm-home
 certbot
 pgdata
 *.log
 coverage
+web.tar.gz
