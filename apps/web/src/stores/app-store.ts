@@ -166,6 +166,14 @@ class AppStore {
     this.reviews = { ...this.reviews, [review.date]: review };
   };
 
+  replacePlansAndReviews = (
+    plans: Record<string, DailyPlan>,
+    reviews: Record<string, DailyReview>,
+  ) => {
+    this.plans = plans;
+    this.reviews = reviews;
+  };
+
   clearAuth = () => {
     this.user = null;
   };

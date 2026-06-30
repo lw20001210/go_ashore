@@ -62,3 +62,15 @@ export function formatHistoryDate(dateKey: string) {
     weekday: 'short',
   }).format(date);
 }
+
+/** 从今天起连续有复盘记录的天数 */
+export function streakDaysFromReviews(reviews: Record<string, { date: string }>) {
+  const keys = new Set(Object.keys(reviews));
+  let streak = 0;
+  let cursor = todayKey();
+  while (keys.has(cursor)) {
+    streak += 1;
+    cursor = dateKeyOffset(-1, cursor);
+  }
+  return streak;
+}

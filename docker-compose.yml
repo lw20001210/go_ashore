@@ -28,6 +28,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32-chars}
       JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
       JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-7d}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       NODE_ENV: ${NODE_ENV:-development}
       PORT: 3001
     depends_on:

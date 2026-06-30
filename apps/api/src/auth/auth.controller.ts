@@ -19,7 +19,10 @@ import { AuthService } from './auth.service';
 import type { AuthRequest } from './auth.types';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 
-const isProduction = () => process.env.NODE_ENV === 'production';
+/** ponytail: 不用 NODE_ENV 推断 Secure，HTTP 生产部署（申请证书前）否则 Cookie 写不进去 */
+function cookieSecure() {
+  return process.env.COOKIE_SECURE === 'true';
+}
 
 @Controller('auth')
 export class AuthController {
@@ -80,14 +83,14 @@ export class AuthController {
       maxAge: 15 * 60 * 1000,
       path: '/',
       sameSite: 'lax',
-      secure: isProduction(),
+      secure: cookieSecure(),
     });
     response.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
       sameSite: 'lax',
-      secure: isProduction(),
+      secure: cookieSecure(),
     });
   }
 }

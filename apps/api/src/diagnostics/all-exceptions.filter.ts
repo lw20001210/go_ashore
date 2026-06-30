@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { PrismaClientInitializationError } from '@prisma/client/runtime/library';
 import type { Response } from 'express';
 import { ErrorLogService } from './error-log.service';
 import type { RequestWithId } from './request.types';
@@ -36,13 +37,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
           detail = message;
         }
       }
+    } else if (exception instanceof PrismaClientInitializationError) {
+      statusCode = HttpStatus.SERVICE_UNAVAILABLE;
+      detail = '数据库未连接，请确认 PostgreSQL 已启动（本地：docker compose up db -d）';
     } else if (exception instanceof Error) {
       detail = exception.message;
       stack = exception.stack;
     }
 
     const isServerError = statusCode >= HttpStatus.INTERNAL_SERVER_ERROR;
-    const publicMessage = isServerError ? 'Internal Server Error' : detail;
+    const publicMessage =
+      statusCode === HttpStatus.SERVICE_UNAVAILABLE
+        ? detail
+        : isServerError
+          ? 'Internal Server Error'
+          : detail;
 
     // 仅记录 5xx，避免「暂无数据」等 4xx 污染排查日志
     if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {

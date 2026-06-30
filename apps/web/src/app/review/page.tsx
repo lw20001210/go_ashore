@@ -5,6 +5,7 @@ import { useState } from "react";
 import { message } from "antd";
 import { AppShell, Card } from "@/components/shell";
 import { reviewApi, isApiError, streamReview } from "@/network";
+import { extractTomorrowSuggestion } from "@/lib/review-text";
 import { btnPrimary, cardTitle, muted, pageTitle } from "@/lib/ui-classes";
 import { todayKey } from "@/lib/utils";
 import { useAppStore } from "@/stores/app-store";
@@ -32,7 +33,7 @@ export default observer(function ReviewPage() {
         completedTaskIds: completedTasks.map((task) => task.id),
         userNote: note,
         aiSummary: output,
-        tomorrowSuggestion: "明天优先处理今天未完成或耗时最长的科目。",
+        tomorrowSuggestion: extractTomorrowSuggestion(output),
       };
       saveLocalReview(review);
       if (user) {

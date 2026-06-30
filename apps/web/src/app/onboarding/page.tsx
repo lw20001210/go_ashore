@@ -1,7 +1,7 @@
 "use client";
 
 import { observer } from "mobx-react-lite";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { message } from "antd";
 import { subjects, type ExamType, type Subject, type UserProfile } from "@shangan/shared";
 import { AppShell, Card } from "@/components/shell";
@@ -9,13 +9,24 @@ import { userApi, aiApi, isApiError } from "@/network";
 import { useAppStore } from "@/stores/app-store";
 
 export default observer(function OnboardingPage() {
-  const { setProfile, setTodayPlan, user } = useAppStore();
-  const [examDate, setExamDate] = useState("");
-  const [examType, setExamType] = useState<ExamType>("guokao");
-  const [weekdayMinutes, setWeekdayMinutes] = useState(90);
-  const [weekendMinutes, setWeekendMinutes] = useState(180);
-  const [focusSubjects, setFocusSubjects] = useState<Subject[]>(["资料", "申论"]);
+  const { profile, setProfile, setTodayPlan, user } = useAppStore();
+  const [examDate, setExamDate] = useState(profile?.examDate ?? "");
+  const [examType, setExamType] = useState<ExamType>(profile?.examType ?? "guokao");
+  const [weekdayMinutes, setWeekdayMinutes] = useState(profile?.weekdayMinutes ?? 90);
+  const [weekendMinutes, setWeekendMinutes] = useState(profile?.weekendMinutes ?? 180);
+  const [focusSubjects, setFocusSubjects] = useState<Subject[]>(
+    profile?.focusSubjects ?? ["资料", "申论"],
+  );
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!profile) return;
+    setExamDate(profile.examDate);
+    setExamType(profile.examType);
+    setWeekdayMinutes(profile.weekdayMinutes);
+    setWeekendMinutes(profile.weekendMinutes);
+    setFocusSubjects(profile.focusSubjects);
+  }, [profile]);
 
   function toggleSubject(subject: Subject) {
     setFocusSubjects((current) =>

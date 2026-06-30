@@ -9,6 +9,12 @@ function mapAuthError(error: unknown, mode: AuthMode): { message: string; status
     if (error.status === 0) {
       return { message: "无法连接后端，请确认 API 已启动", status: 0 };
     }
+    if (error.status === 503) {
+      return {
+        message: "数据库未连接，请先启动 PostgreSQL（docker compose up db -d）",
+        status: error.status,
+      };
+    }
     if (error.status >= 500) {
       return { message: "服务器出错了", status: error.status };
     }
@@ -60,6 +66,10 @@ export function showAuthError(error: unknown, mode: AuthMode) {
   }
   if (mapped.status === 0) {
     message.error("无法连接后端，请先运行 npm run dev。");
+    return;
+  }
+  if (mapped.status === 503) {
+    message.error(mapped.message);
     return;
   }
   if (mapped.status && mapped.status >= 500 && requestId) {

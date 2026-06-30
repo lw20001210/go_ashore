@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ProgressSummary, Subject, Task, subjects } from '@shangan/shared';
+import { daysUntilExam, streakDaysFromDateKeys, toDateKey } from '../common/date';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -27,29 +28,9 @@ export class ProgressService {
     }
 
     return {
-      daysUntilExam: profile ? this.daysUntil(profile.examDate) : 0,
-      streakDays: this.streakDays(reviews.map((review) => review.date)),
+      daysUntilExam: profile ? daysUntilExam(toDateKey(profile.examDate)) : 0,
+      streakDays: streakDaysFromDateKeys(reviews.map((review) => toDateKey(review.date))),
       subjectCounts,
     };
-  }
-
-  private daysUntil(examDate: Date) {
-    const today = new Date();
-    const start = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-    const end = Date.UTC(examDate.getFullYear(), examDate.getMonth(), examDate.getDate());
-    return Math.max(0, Math.ceil((end - start) / 86400000));
-  }
-
-  private streakDays(dates: Date[]) {
-    let streak = 0;
-    const cursor = new Date();
-    cursor.setHours(0, 0, 0, 0);
-
-    const keys = new Set(dates.map((date) => date.toISOString().slice(0, 10)));
-    while (keys.has(cursor.toISOString().slice(0, 10))) {
-      streak += 1;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    return streak;
   }
 }

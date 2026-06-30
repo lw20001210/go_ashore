@@ -6,7 +6,7 @@ import { subjects, type ProgressSummary, type Subject } from '@shangan/shared';
 import { AppShell, Card } from '@/components/shell';
 import { progressApi } from '@/network';
 import { cardTitle, muted, pageTitle } from '@/lib/ui-classes';
-import { daysUntil } from '@/lib/utils';
+import { daysUntil, streakDaysFromReviews } from '@/lib/utils';
 import { useAppStore } from '@/stores/app-store';
 
 export default observer(function ProgressPage() {
@@ -32,7 +32,7 @@ export default observer(function ProgressPage() {
     });
     return {
       daysUntilExam: profile ? daysUntil(profile.examDate) : 0,
-      streakDays: Object.keys(reviews).length,
+      streakDays: streakDaysFromReviews(reviews),
       subjectCounts,
     };
   }, [plans, profile, reviews]);

@@ -60,6 +60,9 @@ export class PlansService {
 
   async deleteTask(userId: string, taskId: string): Promise<DailyPlan> {
     const plan = await this.getToday(userId);
+    if (!plan.tasks.some((task) => task.id === taskId)) {
+      throw new NotFoundException('今日计划中未找到该任务');
+    }
     const tasks = plan.tasks.filter((task) => task.id !== taskId);
     return this.upsertToday(userId, tasks, plan.aiGenerated);
   }
@@ -72,8 +75,8 @@ export class PlansService {
       estimatedMinutes: task.estimatedMinutes,
       completed: Boolean(task.completed),
     }));
-    const plan = await this.getToday(userId).catch(() => null);
-    return this.upsertToday(userId, normalized, plan?.aiGenerated ?? true);
+    const plan = await this.getToday(userId);
+    return this.upsertToday(userId, normalized, plan.aiGenerated);
   }
 
   private toDailyPlan(plan: {

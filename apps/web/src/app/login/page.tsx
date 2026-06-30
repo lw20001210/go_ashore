@@ -6,6 +6,7 @@ import { message } from "antd";
 import { PasswordInput } from "@/components/password-input";
 import { AppShell, Card } from "@/components/shell";
 import { showAuthError } from "@/lib/auth-errors";
+import { syncAfterAuth } from "@/lib/cloud-sync";
 import { authApi, syncApi } from "@/network";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/app-store";
@@ -89,8 +90,9 @@ export default observer(function LoginPage() {
         plans: Object.values(plans),
         reviews: Object.values(reviews),
       });
+      await syncAfterAuth();
     } catch {
-      message.warning("登录成功，但本地数据同步失败，可稍后在设置页重试。");
+      message.warning("登录成功，但数据同步失败，可稍后在设置页重试。");
     }
 
     message.success(mode === "login" ? "登录成功" : "注册成功");

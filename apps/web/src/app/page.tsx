@@ -42,10 +42,7 @@ function HomePage() {
     void planApi
       .getTodayPlan()
       .then((plan) => {
-        // 云端暂无今日计划时返回空列表，保留本地已有计划
-        if (!cancelled && plan.tasks.length > 0) {
-          setTodayPlan(plan);
-        }
+        if (!cancelled) setTodayPlan(plan);
       })
       .catch((error) => {
         if (!cancelled) {
